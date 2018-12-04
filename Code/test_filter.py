@@ -1,6 +1,7 @@
 import cv2
 import time
 import filters
+import random
 
 cap = cv2.VideoCapture(0)
 
@@ -10,8 +11,18 @@ while cap.isOpened():
 
     [ok, frame] = cap.read()
     frame = cv2.flip(frame, 1)
+
+    # filters
+    # ===================
+
     frame = filters.filterGrayScale(frame)
 
+    frame = filters.filterRGBGlitchRandom(frame)
+
+
+
+
+    # ===================
     cv2.imshow('Live video', frame)
 
     key = cv2.waitKey(1)
