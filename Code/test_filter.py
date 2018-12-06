@@ -22,9 +22,13 @@ while cap.isOpened():
     
     # frame = filters.filterRGBGlitchRandom(frame)#Delay time: 0:00:00.004999
 
-    frame = filters.skinSmooth_Bilateral_AlphaBlending(frame) # Delay time: 0:00:00.135920
+    # frame = filters.skinSmooth_Bilateral_AlphaBlending(frame) # Delay time: 0:00:00.135920
 
     # frame = filters.skinSmooth_Gaussian_AlphaBlending(frame) # Delay time: 0:00:00.101941
+
+    # frame = filters.faceEyeDetect(frame) # Delay time: 0:00:00.212875
+
+    frame = filters.faceSticker(frame, "../Image/emoji_resized_0.png", 1.5) # Delay time: 0:00:00.167900
 
     time_end = datetime.now()
     # ===================
