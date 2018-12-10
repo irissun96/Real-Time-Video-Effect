@@ -322,8 +322,8 @@ class faceSticker_dlib():
 
     def changeSticker(self,sticker_file):
         file = open(sticker_file, "r") 
-        # self.sticker_4ch = cv2.imread(file.readline().rstrip("\n"), cv2.IMREAD_UNCHANGED)
-        self.sticker_path = file.readline().rstrip("\n")
+        self.sticker_4ch = cv2.imread(file.readline().rstrip("\n"), cv2.IMREAD_UNCHANGED)
+        # self.sticker_path = file.readline().rstrip("\n")
         self.sticker_mouth_0 = cv2.imread(file.readline().rstrip("\n"), cv2.IMREAD_UNCHANGED)
         self.sticker_mouth_1 = cv2.imread(file.readline().rstrip("\n"), cv2.IMREAD_UNCHANGED)
         self.sticker_mouth_2 = cv2.imread(file.readline().rstrip("\n"), cv2.IMREAD_UNCHANGED)
@@ -333,12 +333,13 @@ class faceSticker_dlib():
 
 
     def newFrame(self, frame):
-        sticker_4ch = cv2.imread(self.sticker_path, cv2.IMREAD_UNCHANGED)
-        sh, sw = sticker_4ch.shape[:2]
+        # sticker_4ch = cv2.imread(self.sticker_path, cv2.IMREAD_UNCHANGED)
+        sh, sw = self.sticker_4ch.shape[:2]
 
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         rects = self.detector(frame_gray, 0)
         for rect in rects:
+            sticker_4ch = np.copy(self.sticker_4ch)
             landmarks = np.array([[p.x, p.y] for p in self.predictor(frame, rect).parts()])
 
             # draw all points:
@@ -366,6 +367,7 @@ class faceSticker_dlib():
             
             x = int(sticker_4ch.shape[1]/2-sticker_mouth_4ch_trans.shape[1]/2)
             y = self.mouth_offset
+
 
             alphaBlending_2(sticker_4ch[:,:,:3], sticker_mouth_4ch_trans[:,:,:3], 
                 sticker_mouth_4ch_trans[:,:,3], x, y)
