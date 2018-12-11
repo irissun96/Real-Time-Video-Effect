@@ -1,0 +1,7 @@
+../Image/emoji_1.png
+../Image/emoji_1_0.png
+../Image/emoji_1_1.png
+../Image/emoji_1_2.png
+2.0
+6.0
+850
