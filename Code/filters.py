@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import math
 import dlib
-
+from scipy.spatial import distance as dist
 
 def filterGrayScale(frame):
     """
@@ -394,8 +394,86 @@ class faceSticker_dlib():
             frame = alphaBlending_2(frame, sticker, sticker_alpha, x, y)
         return frame
 
+class faceSticker_landmarks():
+    """
+    Using dlib landmarks. Add face sticker with different mouth size
+    """
+    def __init__(self, sticker_file):
+        self.changeSticker(sticker_file)
+
+    def changeSticker(self,sticker_file):
+        file = open(sticker_file, "r") 
+        self.sticker_4ch = cv2.imread(file.readline().rstrip("\n"), cv2.IMREAD_UNCHANGED)
+        # self.sticker_path = file.readline().rstrip("\n")
+        self.sticker_mouth_0 = cv2.imread(file.readline().rstrip("\n"), cv2.IMREAD_UNCHANGED)
+        self.sticker_mouth_1 = cv2.imread(file.readline().rstrip("\n"), cv2.IMREAD_UNCHANGED)
+        self.sticker_mouth_2 = cv2.imread(file.readline().rstrip("\n"), cv2.IMREAD_UNCHANGED)
+        self.sticker_scale = float(file.readline())
+        self.mouth_scale = float(file.readline())
+        self.mouth_offset = int(file.readline())
+
+    def newFrame(self, frame, landmarks):
+        # sticker_4ch = cv2.imread(self.sticker_path, cv2.IMREAD_UNCHANGED)
+        sh, sw = self.sticker_4ch.shape[:2]
+
+        # frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # rects = self.detector(frame_gray, 0)
+        # for rect in rects:
+        sticker_4ch = np.copy(self.sticker_4ch)
+        # landmarks = np.array([[p.x, p.y] for p in self.predictor(frame, rect).parts()])
+
+        # draw all points:
+        # i = 0
+        # for p in landmarks:
+        #     cv2.circle(frame, center=(p[0],p[1]), radius=1, color=(0,255,0))
+        #     cv2.putText(frame, text=str(i), org=(p[0],p[1]), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.3, color=(0,255,0))
+        #     i += 1
+
+        # add mouth
+        mouth_l = landmarks[48]
+        mouth_r = landmarks[54]
+        mouth_u = landmarks[62]
+        mouth_d = landmarks[66]
+
+        mw = int(dist.euclidean(mouth_l, mouth_r)*self.mouth_scale)
+        mh = int(max(dist.euclidean(mouth_u, mouth_d), 5)*self.mouth_scale)
+
+        sticker_mouth_trans_0 = cv2.resize(self.sticker_mouth_0, (mw, int(mw/self.sticker_mouth_0.shape[1]*self.sticker_mouth_0.shape[0])), interpolation=cv2.INTER_CUBIC)
+        sticker_mouth_trans_1 = cv2.resize(self.sticker_mouth_1, (mw, mh), interpolation=cv2.INTER_CUBIC)
+        sticker_mouth_trans_2 = cv2.resize(self.sticker_mouth_2, (mw, int(mw/self.sticker_mouth_2.shape[1]*self.sticker_mouth_2.shape[0])), interpolation=cv2.INTER_CUBIC)
+
+        sticker_mouth_4ch_trans = np.concatenate((sticker_mouth_trans_0, sticker_mouth_trans_1), axis=0)
+        sticker_mouth_4ch_trans = np.concatenate((sticker_mouth_4ch_trans, sticker_mouth_trans_2), axis=0)
+        
+        x = int(sticker_4ch.shape[1]/2-sticker_mouth_4ch_trans.shape[1]/2)
+        y = self.mouth_offset
 
 
+        alphaBlending_2(sticker_4ch[:,:,:3], sticker_mouth_4ch_trans[:,:,:3], 
+            sticker_mouth_4ch_trans[:,:,3], x, y)
+
+        # rotate
+        eye_left = landmarks[36]
+        eye_right = landmarks[45]
+        angle = -math.atan2(eye_left[1]-eye_right[1], eye_left[0]-eye_right[0])/math.pi*180
+        if angle > 90:
+            angle = angle - 180
+        elif angle < -90:
+            angle = angle + 180
+        M = cv2.getRotationMatrix2D((sw/2,sw/2), angle, 1)
+        sticker_4ch_trans = cv2.warpAffine(sticker_4ch, M, (sw,sh))
+
+        # resize
+        w = landmarks[16][0] - landmarks[0][0]
+        # w = dist.euclidean(landmarks[16], landmarks[0])
+        sticker_size = (int(w*self.sticker_scale), int(w/sw*sh*self.sticker_scale))
+        sticker_4ch_trans = cv2.resize(sticker_4ch_trans, sticker_size, interpolation=cv2.INTER_CUBIC)
+        sticker = sticker_4ch_trans[:,:,:3]
+        sticker_alpha = sticker_4ch_trans[:,:,3]
+        x = int(landmarks[29][0]-sticker_size[0]/2)
+        y = int(landmarks[29][1]-sticker_size[1]/2)
+        frame = alphaBlending_2(frame, sticker, sticker_alpha, x, y)
+        return frame
 
 class videoShadow:
     """
@@ -418,10 +496,6 @@ class videoShadow:
         if self.kw == self.buffer_size:
             self.kw = 0
         return frame_out
-
-
-
-
 
 
 
