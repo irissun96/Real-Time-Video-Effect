@@ -15,13 +15,14 @@ def Sketch(frame):
     blur = cv2.GaussianBlur(gray_inv, ksize=(21, 21),
                             sigmaX=0, sigmaY=0)
     img_sketch = dodgeV2(gray, blur)
-
+    img_sketch = cv2.cvtColor(img_sketch, cv2.COLOR_GRAY2BGR)
     return img_sketch
 
 def BlackWhite(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     (thresh, im_bw) = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     img_bw = cv2.threshold(gray, thresh, 255, cv2.THRESH_BINARY)[1]
+    img_bw = cv2.cvtColor(img_bw, cv2.COLOR_GRAY2BGR)
     return img_bw
 
 def Cartoon(frame):
